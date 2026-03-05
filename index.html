@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeductAI — Find Every Tax Deduction You're Missing</title>
+  <meta name="description" content="AI scans your bank transactions and finds tax deductions you missed. The average freelancer leaves $2,400/year on the table.">
+  <meta property="og:title" content="DeductAI — Stop Leaving Money on the Table">
+  <meta property="og:description" content="AI-powered tax deduction finder for freelancers. Connect your bank, find your money.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #10b981; --green-dark: #059669; --green-light: #d1fae5;
+      --bg: #0a0a0a; --surface: #141414; --surface-2: #1e1e1e;
+      --border: #2a2a2a; --text: #fafafa; --text-2: #a1a1aa;
+      --accent: #22c55e;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.6; -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      background: rgba(10,10,10,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .logo { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.02em; }
+    .logo span { color: var(--green); }
+    nav a.cta-nav {
+      background: var(--green); color: #000; padding: 0.5rem 1.2rem;
+      border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    nav a.cta-nav:hover { background: var(--green-dark); }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; text-align: center;
+      padding: 6rem 1.5rem 4rem; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 800px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--surface-2); border: 1px solid var(--border);
+      padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.85rem;
+      color: var(--text-2); margin-bottom: 2rem;
+    }
+    .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800;
+      letter-spacing: -0.03em; line-height: 1.1; max-width: 800px;
+      margin-bottom: 1.5rem;
+    }
+    h1 .highlight {
+      background: linear-gradient(135deg, var(--green), #34d399);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      font-size: 1.25rem; color: var(--text-2); max-width: 560px;
+      margin-bottom: 2.5rem; line-height: 1.7;
+    }
+
+    /* ── Signup Form ── */
+    .signup-form {
+      display: flex; gap: 0.75rem; max-width: 480px; width: 100%;
+      margin-bottom: 1rem;
+    }
+    .signup-form input {
+      flex: 1; padding: 0.9rem 1.2rem; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); font-size: 1rem; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+    }
+    .signup-form input:focus { border-color: var(--green); }
+    .signup-form input::placeholder { color: #555; }
+    .signup-form button {
+      padding: 0.9rem 2rem; border-radius: 10px; border: none;
+      background: var(--green); color: #000; font-size: 1rem;
+      font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .signup-form button:hover { background: var(--green-dark); }
+    .signup-form button:active { transform: scale(0.98); }
+    .form-note { font-size: 0.85rem; color: var(--text-2); }
+    .success-msg {
+      display: none; background: var(--surface-2); border: 1px solid var(--green);
+      border-radius: 10px; padding: 1.2rem 2rem; margin-top: 1rem;
+    }
+    .success-msg.show { display: block; }
+
+    /* ── Big Number ── */
+    .big-number {
+      margin: 4rem 0 1rem; font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 800; letter-spacing: -0.04em;
+      background: linear-gradient(135deg, var(--green), #34d399 60%, #6ee7b7);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .big-label { color: var(--text-2); font-size: 1.1rem; margin-bottom: 3rem; }
+
+    /* ── How It Works ── */
+    .section {
+      padding: 5rem 1.5rem; max-width: 960px; margin: 0 auto;
+    }
+    .section-title {
+      font-size: 2rem; font-weight: 700; text-align: center;
+      margin-bottom: 0.75rem; letter-spacing: -0.02em;
+    }
+    .section-sub {
+      text-align: center; color: var(--text-2); font-size: 1.1rem;
+      margin-bottom: 3rem; max-width: 500px; margin-left: auto; margin-right: auto;
+    }
+
+    .steps {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    .step {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem; position: relative;
+    }
+    .step-num {
+      position: absolute; top: 1.2rem; right: 1.5rem;
+      font-size: 3rem; font-weight: 800; color: var(--surface-2);
+      line-height: 1;
+    }
+    .step-icon { font-size: 2rem; margin-bottom: 1rem; }
+    .step h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step p { color: var(--text-2); font-size: 0.95rem; }
+
+    /* ── Social Proof ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.5rem; margin-top: 2rem;
+    }
+    .stat {
+      text-align: center; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem 1rem;
+    }
+    .stat-number { font-size: 2.2rem; font-weight: 800; color: var(--green); }
+    .stat-label { color: var(--text-2); font-size: 0.9rem; margin-top: 0.3rem; }
+
+    /* ── Example ── */
+    .example-table {
+      width: 100%; border-collapse: collapse; margin-top: 2rem;
+      background: var(--surface); border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .example-table th {
+      text-align: left; padding: 1rem 1.2rem; font-size: 0.8rem;
+      text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-2);
+      border-bottom: 1px solid var(--border); font-weight: 600;
+    }
+    .example-table td {
+      padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+    .example-table tr:last-child td { border-bottom: none; }
+    .tag {
+      display: inline-block; padding: 0.15rem 0.6rem; border-radius: 6px;
+      font-size: 0.8rem; font-weight: 600;
+    }
+    .tag-green { background: rgba(16,185,129,0.15); color: var(--green); }
+    .tag-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .tag-yellow { background: rgba(234,179,8,0.15); color: #eab308; }
+    .amount { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .amount-green { color: var(--green); }
+
+    /* ── FAQ ── */
+    details {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; margin-bottom: 0.75rem; overflow: hidden;
+    }
+    summary {
+      padding: 1.2rem 1.5rem; cursor: pointer; font-weight: 600;
+      font-size: 1.05rem; list-style: none; display: flex;
+      justify-content: space-between; align-items: center;
+    }
+    summary::after { content: '+'; color: var(--text-2); font-size: 1.3rem; }
+    details[open] summary::after { content: '-'; }
+    details p { padding: 0 1.5rem 1.2rem; color: var(--text-2); }
+
+    /* ── Final CTA ── */
+    .final-cta {
+      text-align: center; padding: 5rem 1.5rem;
+      background: linear-gradient(180deg, transparent, rgba(16,185,129,0.03));
+    }
+    .final-cta h2 {
+      font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+    .final-cta p { color: var(--text-2); font-size: 1.1rem; margin-bottom: 2rem; }
+    .final-cta .signup-form { margin: 0 auto 1rem; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; padding: 2rem; color: #444;
+      font-size: 0.85rem; border-top: 1px solid var(--border);
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      .signup-form { flex-direction: column; }
+      .signup-form button { width: 100%; }
+      nav { padding: 0.8rem 1rem; }
+      .section { padding: 3rem 1rem; }
+    }
+
+    /* ── Counter animation ── */
+    .counter { display: inline-block; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Deduct<span>AI</span></div>
+  <a href="#signup" class="cta-nav">Get Early Access</a>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero" id="top">
+  <div class="badge"><span class="dot"></span> Now accepting early access signups</div>
+  <h1>Stop leaving <span class="highlight">$2,400/year</span> on the table</h1>
+  <p class="subtitle">AI scans your bank transactions and finds every tax deduction you're missing. Built for freelancers, contractors, and side hustlers.</p>
+
+  <form class="signup-form" id="signup">
+    <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+    <button type="submit">Get Early Access</button>
+  </form>
+  <p class="form-note">Free to try. No credit card required.</p>
+  <div class="success-msg" id="success">You're on the list! We'll notify you when early access opens.</div>
+
+  <div class="big-number">$141B</div>
+  <p class="big-label">left on the table by freelancers every year in unclaimed deductions</p>
+</section>
+
+<!-- ── How It Works ── -->
+<section class="section">
+  <h2 class="section-title">Three steps. Real money back.</h2>
+  <p class="section-sub">No accounting degree required. Connect, scan, save.</p>
+
+  <div class="steps">
+    <div class="step">
+      <span class="step-num">1</span>
+      <div class="step-icon">🏦</div>
+      <h3>Connect your bank</h3>
+      <p>Securely link your accounts via Plaid. We see transactions — never your login credentials.</p>
+    </div>
+    <div class="step">
+      <span class="step-num">2</span>
+      <div class="step-icon">🤖</div>
+      <h3>AI scans everything</h3>
+      <p>Our AI analyzes every transaction against IRS rules. Software subscriptions, meals, travel, home office — nothing gets missed.</p>
+    </div>
+    <div class="step">
+      <span class="step-num">3</span>
+      <div class="step-icon">💰</div>
+      <h3>See what you're owed</h3>
+      <p>Get a clear breakdown of deductions by category with confidence scores. Review, approve, export to your CPA or TurboTax.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Example ── -->
+<section class="section">
+  <h2 class="section-title">See it in action</h2>
+  <p class="section-sub">Here's what DeductAI finds in a typical freelancer's transactions</p>
+
+  <table class="example-table">
+    <thead>
+      <tr><th>Transaction</th><th>Amount</th><th>AI Classification</th><th>You Save</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Zoom Pro Monthly</td>
+        <td class="amount">$14.99</td>
+        <td><span class="tag tag-green">Business — Software</span></td>
+        <td class="amount amount-green">$14.99</td>
+      </tr>
+      <tr>
+        <td>WeWork Hot Desk</td>
+        <td class="amount">$350.00</td>
+        <td><span class="tag tag-green">Business — Rent</span></td>
+        <td class="amount amount-green">$350.00</td>
+      </tr>
+      <tr>
+        <td>Uber to client meeting</td>
+        <td class="amount">$24.50</td>
+        <td><span class="tag tag-green">Business — Travel</span></td>
+        <td class="amount amount-green">$24.50</td>
+      </tr>
+      <tr>
+        <td>Comcast Internet</td>
+        <td class="amount">$89.00</td>
+        <td><span class="tag tag-yellow">Mixed — 60% Business</span></td>
+        <td class="amount amount-green">$53.40</td>
+      </tr>
+      <tr>
+        <td>Netflix Premium</td>
+        <td class="amount">$15.99</td>
+        <td><span class="tag tag-red">Personal</span></td>
+        <td class="amount">$0</td>
+      </tr>
+      <tr>
+        <td>Starbucks w/ client</td>
+        <td class="amount">$12.80</td>
+        <td><span class="tag tag-yellow">Business — Meals 50%</span></td>
+        <td class="amount amount-green">$6.40</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ── Stats ── -->
+<section class="section">
+  <h2 class="section-title">The freelancer tax problem</h2>
+  <p class="section-sub">Most freelancers overpay because they don't know what's deductible</p>
+
+  <div class="stats-row">
+    <div class="stat">
+      <div class="stat-number">59M</div>
+      <div class="stat-label">US freelancers</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">$2,400</div>
+      <div class="stat-label">avg. missed deductions/yr</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">73%</div>
+      <div class="stat-label">don't track deductions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">23</div>
+      <div class="stat-label">IRS deduction categories</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ── -->
+<section class="section">
+  <h2 class="section-title">Questions</h2>
+  <p class="section-sub">&nbsp;</p>
+
+  <details>
+    <summary>Is my bank data safe?</summary>
+    <p>We use Plaid, the same service used by Venmo, Robinhood, and Coinbase. We never see your bank login credentials. All data is encrypted in transit and at rest.</p>
+  </details>
+  <details>
+    <summary>How accurate is the AI?</summary>
+    <p>Our AI uses Claude to classify transactions against IRS Publication 535 and Schedule C rules. High-confidence deductions are auto-classified; edge cases are flagged for your review. You always have final say.</p>
+  </details>
+  <details>
+    <summary>Does this replace my accountant?</summary>
+    <p>No. DeductAI finds deductions your accountant might miss because they don't see every transaction. Export the results to your CPA or import into TurboTax Self-Employed. Think of it as a second pair of eyes.</p>
+  </details>
+  <details>
+    <summary>What types of freelancers is this for?</summary>
+    <p>Anyone filing Schedule C: freelance developers, designers, writers, consultants, rideshare drivers, real estate agents, photographers, coaches — if you're self-employed and have business expenses, this is for you.</p>
+  </details>
+  <details>
+    <summary>How much does it cost?</summary>
+    <p>Early access is free. We're building this with real users first. Our target pricing is $20/month — less than 1% of the average savings we find.</p>
+  </details>
+</section>
+
+<!-- ── Final CTA ── -->
+<section class="final-cta">
+  <h2>Find your missing money</h2>
+  <p>Join the waitlist. Be the first to try DeductAI when we launch.</p>
+  <form class="signup-form" id="signup-footer">
+    <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+    <button type="submit">Get Early Access</button>
+  </form>
+  <p class="form-note">No spam. Just early access when we're ready.</p>
+</section>
+
+<footer>
+  &copy; 2026 DeductAI &middot; A TECH42 Stanford Project &middot; Built with Claude AI
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://pgqoqhozxqpjnukjbzug.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBncW9xaG96eHFwam51a2pienVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1ODg0NDQsImV4cCI6MjA4ODE2NDQ0NH0.cUZ5pRGkZNfrX6eud2FqnJOmFUSO2cpcmIpkVx1vfDI';
+
+async function submitSignup(form) {
+  const btn = form.querySelector('button');
+  const emailInput = form.querySelector('input[type="email"]');
+  const email = emailInput.value.trim();
+  btn.textContent = 'Joining...';
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        email,
+        source: form.id === 'signup' ? 'hero' : 'footer',
+        referrer: document.referrer || null,
+      }),
+    });
+
+    if (resp.ok || resp.status === 201) {
+      form.style.display = 'none';
+      const successEl = form.parentElement.querySelector('.success-msg');
+      if (successEl) {
+        successEl.classList.add('show');
+      } else {
+        const msg = document.createElement('div');
+        msg.className = 'success-msg show';
+        msg.textContent = "You're on the list! We'll notify you when early access opens.";
+        form.parentElement.insertBefore(msg, form.nextSibling);
+      }
+    } else if (resp.status === 409) {
+      // Duplicate email — still show success
+      form.style.display = 'none';
+      const msg = document.createElement('div');
+      msg.className = 'success-msg show';
+      msg.textContent = "You're already on the list! We'll be in touch soon.";
+      form.parentElement.insertBefore(msg, form.nextSibling);
+    } else {
+      btn.textContent = 'Try Again';
+      btn.disabled = false;
+    }
+  } catch {
+    btn.textContent = 'Try Again';
+    btn.disabled = false;
+  }
+}
+
+document.querySelectorAll('form').forEach(form => {
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitSignup(form);
+  });
+});
+
+// Smooth scroll for nav CTA
+document.querySelector('.cta-nav').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('signup').scrollIntoView({ behavior: 'smooth' });
+});
+</script>
+
+</body>
+</html>
